@@ -352,3 +352,31 @@ Review the summary in aidlc-docs/construction/build-and-test/build-and-test-summ
 
 ---
 ```
+
+## Additional Steps for Parallel Execution Context (CONDITIONAL - parallel extension enabled)
+
+**Execute IF**: Parallel Execution extension is enabled in aidlc-state.md
+**Skip IF**: Parallel Execution extension is disabled
+
+### Step 11: Cross-Unit Integration Test (after all units merged)
+After all unit PRs are merged to main:
+- [ ] Run full integration test suite on main branch
+- [ ] Verify all Contract Tests pass (all providers + all consumers)
+- [ ] Run E2E tests covering cross-unit workflows
+- [ ] Run performance tests (if applicable)
+- [ ] Generate integration test report
+
+### Step 12: Contract Test Summary
+- [ ] Generate `aidlc-docs/construction/build-and-test/contract-test-report.md`:
+  - All interface contracts and their test results
+  - Any contracts that were changed during Sync Point resolution
+  - Mock vs Real service test result comparison
+  - Interface coverage analysis
+
+### Step 13: Parallel Execution Retrospective Data
+- [ ] Export final dashboard state as JSON
+- [ ] Document parallel execution metrics:
+  - Total elapsed time
+  - Per-unit elapsed time
+  - Number of sync points (PR merges)
+  - Mock → Real transition success rate

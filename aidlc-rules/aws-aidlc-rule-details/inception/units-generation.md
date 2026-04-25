@@ -34,6 +34,26 @@ This stage decomposes the system into manageable units of work through two integ
 - [ ] Validate unit boundaries and dependencies
 - [ ] Ensure all stories are assigned to units
 
+## Step 2.5: Team Roster Collection (CONDITIONAL - parallel extension enabled)
+
+**Execute IF**: Parallel Execution extension is enabled in aidlc-state.md
+**Skip IF**: Parallel Execution extension is disabled
+
+Collect team information before unit decomposition:
+- [ ] Generate `aidlc-docs/inception/application-design/team-roster.md`
+
+**team-roster.md format:**
+
+| Name | Role | Domain Expertise | Availability (%) |
+|------|------|-----------------|-------------------|
+| [Answer]: | [Answer]: Role options: PO, BE Dev, FE Dev, Full-stack, DevOps, QA, Tech Lead, Designer | [Answer]: | [Answer]: |
+
+**CRITICAL**: Team size and composition INFLUENCES unit decomposition strategy:
+- More BE Devs than FE Devs → prefer more backend-focused units
+- Few developers → fewer units, or sequential execution
+- Shared roles (DevOps at 50%) → note scheduling constraints
+- Solo developer → skip parallel execution, use sequential fallback
+
 ## Step 3: Generate Context-Appropriate Questions
 **DIRECTIVE**: Analyze the requirements, stories, and application design to generate ONLY questions relevant to THIS specific decomposition problem. Use the categories below as inspiration, NOT as a mandatory checklist. Skip entire categories if not applicable.
 
@@ -111,6 +131,33 @@ If the analysis in step 7 reveals ANY ambiguous answers, you MUST:
 - [ ] Follow the approved decomposition approach from Planning
 - [ ] Use the criteria and boundaries specified in the plan
 
+## Step 13.5: Unit-Team Assignment (CONDITIONAL - parallel extension enabled)
+
+**Execute IF**: Parallel Execution extension is enabled in aidlc-state.md
+**Skip IF**: Parallel Execution extension is disabled
+
+After units are generated, assign team members to each unit:
+- [ ] Generate `aidlc-docs/inception/application-design/unit-team-assignment.md`
+
+**unit-team-assignment.md format:**
+
+| Unit | Team Members | Branch | Lead | Mock Required |
+|------|-------------|--------|------|---------------|
+| {unit-name} | {names with roles} | unit/{unit-name} | {lead name} | Yes/No |
+
+**Assignment Rules:**
+1. Each unit MUST have at least one developer assigned as Lead
+2. PO is NOT assigned to individual units (PO orchestrates across all)
+3. Shared roles (DevOps, QA) should note time allocation per unit
+4. If a unit has dependencies, mark "Mock Required: Yes"
+5. Consider domain expertise when matching developers to units
+
+**Validation:**
+- Every developer appears in at least one unit
+- No unit has zero developers assigned
+- PO is identified as orchestrator
+- Team Lead is designated for each unit
+
 ## Step 14: Update Progress
 - [ ] Mark the completed step as [x] in the unit of work plan
 - [ ] Update `aidlc-docs/aidlc-state.md` current status
@@ -180,4 +227,7 @@ If the analysis in step 7 reveals ANY ambiguous answers, you MUST:
   - `unit-of-work.md` with unit definitions
   - `unit-of-work-dependency.md` with dependency matrix
   - `unit-of-work-story-map.md` with story mappings
+  - `team-roster.md` with team member information (when parallel extension enabled)
+  - `unit-team-assignment.md` with unit-team mapping (when parallel extension enabled)
 - Units verified and ready for per-unit design stages
+- Team assignments validated: all developers assigned, PO identified (when parallel extension enabled)

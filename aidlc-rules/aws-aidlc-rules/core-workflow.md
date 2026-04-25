@@ -294,21 +294,45 @@ All subsequent rule detail file references (e.g., `common/process-overview.md`, 
 **Focus**: Determine HOW to build it
 
 **Stages in CONSTRUCTION PHASE**:
-- Per-Unit Loop (executes for each unit):
+- Parallel Execution Stages (CONDITIONAL - parallel extension enabled):
+  - Interface Contract Establishment
+  - Contract-Driven Mock Generation
+  - Parallel Execution Strategy
+- Per-Unit Loop (executes for each unit, parallel or sequential):
   - Functional Design (CONDITIONAL, per-unit)
   - NFR Requirements (CONDITIONAL, per-unit)
   - NFR Design (CONDITIONAL, per-unit)
   - Infrastructure Design (CONDITIONAL, per-unit)
   - Code Generation (ALWAYS, per-unit)
+- Sync Points (CONDITIONAL - parallel extension enabled, per PR merge)
 - Build and Test (ALWAYS - after all units complete)
 
-**Note**: Each unit is completed fully (design + code) before moving to the next unit.
+**Note**: By default, each unit is completed fully (design + code) before moving to the next unit. When the Parallel Execution extension is enabled, units may be executed in parallel across separate branches/sessions. See `extensions/parallel/parallel-execution.md` for details.
+
+---
+
+## Parallel Execution Stages (CONDITIONAL)
+
+**Execute IF**:
+- Parallel Execution extension is enabled in aidlc-state.md
+
+**Skip IF**:
+- Parallel Execution extension is disabled or not configured
+
+**Execution**:
+When enabled, the parallel extension inserts additional stages before and after the Per-Unit Loop. Load and follow `extensions/parallel/parallel-execution.md` for the complete parallel workflow including:
+- Interface Contract Establishment
+- Contract-Driven Mock Generation
+- Parallel Execution Strategy (branch creation, team assignment)
+- Sync Points (PR-based integration after each unit completes)
 
 ---
 
 ## Per-Unit Loop (Executes for Each Unit)
 
-**For each unit of work, execute the following stages in sequence:**
+**For each unit of work, execute the following stages:**
+- When parallel extension is disabled: execute sequentially (one unit at a time)
+- When parallel extension is enabled: each unit executes in its own branch, potentially in parallel. See `extensions/parallel/parallel-execution.md` for context loading, branch isolation, and unit completion rules.
 
 ### Functional Design (CONDITIONAL, per-unit)
 
