@@ -60,9 +60,16 @@ After a unit is merged to main:
   - [ ] Update dashboard with resolution status
   - [ ] Retry transition from Step 4 after resolution
 
+## Relationship to Cross-Unit Integration Test
+
+Sync Points verify ONE direction per merge: the just-merged unit's dependent branches transitioning their Mock to real service. They do NOT verify calls flowing FROM previously-merged units TO later-merged units — by the time a later unit merges, the earlier unit's branch no longer exists and cannot rerun any tests.
+
+Those "upstream" cross-unit paths are covered by **Step 11 Cross-Unit Integration Test** in `construction/build-and-test.md`, executed ONCE on main after the final Sync Point completes. See PARALLEL-07 in `extensions/parallel/parallel-execution.md` for the Construction completion-gate rule.
+
 ## Critical Rules
 - NEVER merge a PR that fails Contract Tests
 - PO is the final authority on merge order
 - Mock → Real transition MUST verify Contract Tests pass
 - Transition failures MUST be categorized (implementation bug vs contract defect)
 - Dashboard MUST reflect real-time status of all sync point activities
+- Construction Phase completion requires Step 11 (Cross-Unit Integration Test) to pass — per-unit Sync Points alone are NOT sufficient

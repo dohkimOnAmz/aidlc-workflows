@@ -365,12 +365,32 @@ Present completion message in this structure:
 **Skip IF**: Parallel Execution extension is disabled
 
 ### Step 11: Cross-Unit Integration Test (after all units merged)
-After all unit PRs are merged to main:
+
+**Trigger**: Final unit's PR merged to main and its Sync Point completed.
+
+**Who executes**: PO orchestrates; Tech Lead executes. No unit lead owns this step because all unit branches are closed by this point.
+
+**Environment setup**:
+- [ ] Stop all Mock servers (no Mock traffic allowed during this step)
+- [ ] Start all real services from main branch in a shared environment (docker-compose, staging, or ephemeral test env)
+- [ ] Verify all services are healthy before running tests
+
+**Test execution**:
 - [ ] Run full integration test suite on main branch
-- [ ] Verify all Contract Tests pass (all providers + all consumers)
+- [ ] Verify all Contract Tests pass (all providers + all consumers executed against real services, not Mocks)
 - [ ] Run E2E tests covering cross-unit workflows
-- [ ] Run performance tests (if applicable)
-- [ ] Generate integration test report
+  - Source: E2E scenarios derived from Inception Phase user stories that span multiple units. These scenarios must be authored during Inception or Functional Design and committed to main BEFORE Step 11 — automatic derivation from contracts is NOT possible at this level.
+- [ ] Run performance tests (if applicable per NFR requirements)
+- [ ] Generate integration test report at `aidlc-docs/construction/build-and-test/cross-unit-integration-report.md`
+
+**Why Step 11 is required beyond per-unit Sync Points**: Per-unit Sync Points verify only calls flowing INTO the just-merged unit (its dependents transitioning from Mock to real). They do NOT verify calls flowing OUT of earlier-merged units INTO later-merged units — once a unit merges, its branch is closed and cannot rerun tests. Step 11 is the only checkpoint that exercises every real-to-real interaction in both directions.
+
+**Failure handling**: Classify failure cause and recover via fresh branches (all unit branches are already closed at this point):
+- **Implementation bug** (a unit's real service fails E2E path): PO designates the responsible unit; that unit's lead recreates the branch (`git checkout -b hotfix/{unit-name} main`), fixes, PRs hotfix → main, then Step 11 is rerun.
+- **Contract defect** (contract spec itself is wrong): update contract spec on main, regenerate affected Mocks and Contract Tests, affected units create fix PRs from new branches, then Step 11 is rerun.
+- **E2E scenario defect** (test scenario itself is wrong): PO approves scenario fix on main, then Step 11 is rerun.
+
+**Completion gate**: Per PARALLEL-07 (`extensions/parallel/parallel-execution.md`), Construction Phase MUST NOT be marked complete until this step passes.
 
 ### Step 12: Contract Test Summary
 - [ ] Generate `aidlc-docs/construction/build-and-test/contract-test-report.md`:
