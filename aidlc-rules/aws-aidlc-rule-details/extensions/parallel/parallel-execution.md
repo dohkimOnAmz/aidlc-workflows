@@ -33,6 +33,11 @@ When a contract issue is discovered during development:
 3. Contract issues are resolved during Sync Point phase after all units complete
 4. Do NOT create Contract Change PRs during active development
 
+### Rule PARALLEL-07: Cross-Unit Integration Gate
+Construction Phase MUST NOT be declared complete until the Cross-Unit Integration Test (Step 11 of `construction/build-and-test.md`) passes on main with all real services running.
+
+Per-unit Sync Points verify only the "consumer → provider" direction for each newly-merged unit's dependent branches. They do NOT verify calls flowing from earlier-merged units to later-merged units — by the time a later unit merges, the earlier unit's branch no longer exists and cannot rerun any tests. Step 11 is the sole checkpoint for those upstream cross-unit paths.
+
 ## Stage Orchestration
 
 When this extension is enabled, the Construction Phase executes additional stages in the following order:
@@ -63,6 +68,13 @@ Each unit executes in its own branch with context isolation:
    - Load all steps from `extensions/parallel/sync-point.md`
    - PR creation, Contract Test verification, PO review, Mock→Real transition
 
+### After All Units Merged:
+5. **Cross-Unit Integration Test** (once, after the final Sync Point)
+   - Execute Steps 11–13 of `construction/build-and-test.md`
+   - Verifies real-to-real interactions across all units on main
+   - This is the only stage that validates calls flowing from earlier-merged units to later-merged units (paths that individual Sync Points cannot cover)
+   - PARALLEL-07 gates Construction Phase completion on this step
+
 ### When Parallel Execution Is Not Feasible
 If parallel execution turns out to be infeasible after opt-in (e.g., insufficient team members to staff all units concurrently, or tooling constraints):
 1. Complete ALL units' Functional Design first (sequential, lightweight)
@@ -76,3 +88,4 @@ When presenting any stage completion during Construction Phase:
 - Confirm branch isolation is maintained
 - Confirm no contract violations detected
 - Confirm dashboard status is current
+- If declaring Construction Phase complete: confirm the Cross-Unit Integration Test (Step 11) passed on main, per PARALLEL-07
