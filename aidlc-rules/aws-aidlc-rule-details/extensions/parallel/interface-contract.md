@@ -17,13 +17,13 @@ No programming language code (Swift, Python, Java, TypeScript, etc.) is allowed 
 
 ## Prerequisites
 - Units Generation must be complete
-- unit-of-work-dependency.md must exist with dependency matrix
-- unit-team-assignment.md must exist
+- `aidlc-docs/inception/application-design/unit-of-work-dependency.md` must exist with dependency matrix
+- `aidlc-docs/inception/application-design/unit-team-assignment.md` must exist
 
 ## PART 1: PLANNING
 
 ### Step 1: Identify All Inter-Unit Interfaces
-- [ ] Load unit-of-work-dependency.md
+- [ ] Load `aidlc-docs/inception/application-design/unit-of-work-dependency.md`
 - [ ] For each dependency arrow, determine the network protocol and contract format:
   - REST API → OpenAPI 3.0 spec
   - gRPC → .proto file
