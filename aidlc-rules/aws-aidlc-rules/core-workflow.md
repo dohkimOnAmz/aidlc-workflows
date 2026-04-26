@@ -11,10 +11,11 @@ The AI model intelligently assesses what stages are needed based on:
 4. Risk and impact assessment
 
 ## MANDATORY: Rule Details Loading
-**CRITICAL**: When performing any phase, you MUST read and use relevant content from rule detail files. Check these paths in order and use the first one that exists:
-- `.aidlc-rule-details/` (Cursor, Cline, Claude Code, GitHub Copilot)
-- `.kiro/aws-aidlc-rule-details/` (Kiro IDE and CLI)
-- `.amazonq/aws-aidlc-rule-details/` (Amazon Q Developer)
+**CRITICAL**: When performing any phase, you MUST read and use relevant content from rule detail files. Check these paths in order and use the first one that exists, regardless of which IDE or setup method was used:
+- `.aidlc/aidlc-rules/aws-aidlc-rule-details/` (typical with AI-assisted setup)
+- `.aidlc-rule-details/` (typical with Cursor, Cline, Claude Code, GitHub Copilot, OpenAI Codex)
+- `.kiro/aws-aidlc-rule-details/` (typical with Kiro IDE and CLI)
+- `.amazonq/aws-aidlc-rule-details/` (typical with Amazon Q Developer)
 
 All subsequent rule detail file references (e.g., `common/process-overview.md`, `inception/workspace-detection.md`) are relative to whichever rule details directory was resolved above.
 
@@ -381,7 +382,7 @@ When enabled, the parallel extension inserts additional stages before and after 
 
 **Skip IF**:
 - No NFR requirements
-- NFR Requirements Assessment was skipped
+- NFR Requirements was skipped
 
 **Execution**:
 1. **MANDATORY**: Log any user input during this stage in audit.md
@@ -502,7 +503,7 @@ The Operations stage will eventually include:
 - **MANDATORY**: Log every approval prompt with timestamp before asking the user
 - **MANDATORY**: Record every user response with timestamp after receiving it
 - **CRITICAL**: ALWAYS append changes to EDIT audit.md file, NEVER use tools and commands that completely overwrite its contents
-- **CRITICAL**: Using file writing tools and commands that overwrite contents of the entire audit.md and cause duplication
+- **CRITICAL**: NEVER use file writing tools and commands that overwrite the entire contents of audit.md, as this causes duplication
 - Use ISO 8601 format for timestamps (YYYY-MM-DDTHH:MM:SSZ)
 - Include stage context for each entry
 

@@ -1,4 +1,4 @@
-"""Zip extraction, YAML parsing, run classification, and trend assembly."""
+"""Zip/directory extraction, YAML parsing, run classification, and trend assembly."""
 
 from __future__ import annotations
 
@@ -18,6 +18,8 @@ from .models import (
     ContractTestResults,
     DocumentScore,
     HandoffMetrics,
+    InfraFailure,
+    InfraFailureReason,
     QualitativeComparison,
     RunConfig,
     RunData,
@@ -32,7 +34,7 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-# The YAML files we expect inside every report zip.
+# The YAML files we expect inside every report bundle (zip or directory).
 REQUIRED_YAML = {
     "run-meta": "run-meta.yaml",
     "run-metrics": "run-metrics.yaml",
@@ -147,14 +149,20 @@ def parse_run_metrics(yaml_path: Path) -> RunMetrics:
 
     hp = raw.get("handoff_patterns", {})
     errors = raw.get("errors", {})
+    throttle_events = errors.get("throttle_events", 0)
+    timeout_events = errors.get("timeout_events", 0)
+    failed_tool_calls = errors.get("failed_tool_calls", 0)
+    model_error_events = errors.get("model_error_events", 0)
+    service_unavailable_events = errors.get("service_unavailable_events", 0)
+    validation_error_events = errors.get("validation_error_events", 0)
     error_count = sum(
         [
-            errors.get("throttle_events", 0),
-            errors.get("timeout_events", 0),
-            errors.get("failed_tool_calls", 0),
-            errors.get("model_error_events", 0),
-            errors.get("service_unavailable_events", 0),
-            errors.get("validation_error_events", 0),
+            throttle_events,
+            timeout_events,
+            failed_tool_calls,
+            model_error_events,
+            service_unavailable_events,
+            validation_error_events,
         ]
     )
 
@@ -175,6 +183,12 @@ def parse_run_metrics(yaml_path: Path) -> RunMetrics:
         handoffs=handoffs,
         server_startup_success=True,
         error_count=error_count,
+        throttle_events=throttle_events,
+        service_unavailable_events=service_unavailable_events,
+        model_error_events=model_error_events,
+        timeout_events=timeout_events,
+        failed_tool_calls=failed_tool_calls,
+        validation_error_events=validation_error_events,
     )
 
 
@@ -215,12 +229,17 @@ def parse_contract_tests(yaml_path: Path) -> ContractTestResults:
                 )
             )
 
+    server_started = raw.get("server_started", True)
+    server_error = raw.get("server_error") or ""
+
     return ContractTestResults(
         total=total,
         passed=passed,
         failed=failed,
         pass_rate=pass_rate,
         failures=failures,
+        server_started=server_started,
+        server_error=server_error,
     )
 
 
@@ -302,26 +321,78 @@ def classify_run(rules_ref: str) -> tuple[RunType, str, SemVer | None, int | Non
 
 
 # ---------------------------------------------------------------------------
+# Infrastructure failure detection
+# ---------------------------------------------------------------------------
+
+
+def detect_infra_failure(
+    meta: RunMeta,
+    metrics: RunMetrics,
+    contract_tests: ContractTestResults,
+    has_metrics_file: bool,
+) -> InfraFailure:
+    """Detect infrastructure failures from run signals.
+
+    Conservative: only flags clear infra issues, not ambiguous cases.
+    """
+    reasons: list[InfraFailureReason] = []
+
+    # Signal 1: Bedrock infra errors in run-metrics.yaml
+    if metrics.throttle_events > 0:
+        reasons.append(InfraFailureReason.THROTTLED)
+    if metrics.service_unavailable_events > 0:
+        reasons.append(InfraFailureReason.SERVICE_UNAVAILABLE)
+    if metrics.model_error_events > 0:
+        reasons.append(InfraFailureReason.MODEL_ERROR)
+
+    # Signal 2: run-meta.yaml status indicates failure/crash
+    status_lower = meta.status.lower() if meta.status else ""
+    if "failed" in status_lower:
+        reasons.append(InfraFailureReason.RUN_FAILED)
+    elif not meta.status or meta.status.strip() == "":
+        reasons.append(InfraFailureReason.RUN_CRASHED)
+
+    # Signal 3: run-metrics.yaml missing entirely (swarm crashed before writing)
+    if not has_metrics_file:
+        reasons.append(InfraFailureReason.METRICS_MISSING)
+
+    # Signal 4: Server failed to start (from contract-test-results.yaml)
+    if not contract_tests.server_started:
+        reasons.append(InfraFailureReason.SERVER_START_FAILED)
+
+    if not reasons:
+        return InfraFailure(is_infra_failure=False)
+
+    reason_strs = [r.value for r in reasons]
+    summary = f"Infrastructure failure detected: {', '.join(reason_strs)}"
+
+    return InfraFailure(
+        is_infra_failure=True,
+        reasons=reasons,
+        summary=summary,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Collection pipeline
 # ---------------------------------------------------------------------------
 
 
-def collect_from_zip(zip_path: Path, work_dir: Path) -> RunData:
-    """Extract a zip bundle and parse all YAML files into a RunData."""
-    run_dir = extract_zip(zip_path, work_dir)
+def _collect_from_run_dir(run_dir: Path, source_label: str) -> RunData:
+    """Parse YAML files in *run_dir* into a RunData.
+
+    *source_label* is used in error messages (e.g. the zip path or directory).
+    """
     yaml_files = find_yaml_files(run_dir)
 
     if "run-meta" not in yaml_files:
-        raise CollectorError(f"run-meta.yaml missing from {zip_path} — cannot classify run")
+        raise CollectorError(f"run-meta.yaml missing from {source_label} — cannot classify run")
 
     meta = parse_run_meta(yaml_files["run-meta"])
     run_type, label, semver, pr_number = classify_run(meta.config.rules_ref)
 
-    metrics = (
-        parse_run_metrics(yaml_files["run-metrics"])
-        if "run-metrics" in yaml_files
-        else RunMetrics()
-    )
+    has_metrics_file = "run-metrics" in yaml_files
+    metrics = parse_run_metrics(yaml_files["run-metrics"]) if has_metrics_file else RunMetrics()
     unit_tests = (
         parse_test_results(yaml_files["test-results"])
         if "test-results" in yaml_files
@@ -332,6 +403,10 @@ def collect_from_zip(zip_path: Path, work_dir: Path) -> RunData:
         if "contract-test-results" in yaml_files
         else ContractTestResults()
     )
+
+    # Propagate actual server_started to metrics
+    metrics.server_startup_success = contract_tests.server_started
+
     code_quality = (
         parse_quality_report(yaml_files["quality-report"])
         if "quality-report" in yaml_files
@@ -344,12 +419,17 @@ def collect_from_zip(zip_path: Path, work_dir: Path) -> RunData:
     )
 
     # Backfill artifact counts from run-metrics if available
-    if "run-metrics" in yaml_files:
+    if has_metrics_file:
         raw_metrics = _load_yaml(yaml_files["run-metrics"])
         workspace = raw_metrics.get("artifacts", {}).get("workspace", {})
         code_quality.source_file_count = workspace.get("source_files", 0)
         code_quality.test_file_count = workspace.get("test_files", 0)
         code_quality.total_lines_of_code = workspace.get("total_lines_of_code", 0)
+
+    # Detect infrastructure failures
+    infra_failure = detect_infra_failure(meta, metrics, contract_tests, has_metrics_file)
+    if infra_failure.is_infra_failure:
+        logger.warning("Infra failure detected in %s: %s", source_label, infra_failure.summary)
 
     return RunData(
         label=label,
@@ -362,7 +442,25 @@ def collect_from_zip(zip_path: Path, work_dir: Path) -> RunData:
         contract_tests=contract_tests,
         code_quality=code_quality,
         qualitative=qualitative,
+        infra_failure=infra_failure,
     )
+
+
+def collect_from_zip(zip_path: Path, work_dir: Path) -> RunData:
+    """Extract a zip bundle and parse all YAML files into a RunData."""
+    run_dir = extract_zip(zip_path, work_dir)
+    return _collect_from_run_dir(run_dir, source_label=str(zip_path))
+
+
+def collect_from_directory(dir_path: Path) -> RunData:
+    """Parse all YAML files from a plain directory into a RunData.
+
+    Unlike :func:`collect_from_zip`, no extraction step is needed.
+    The directory must contain the expected YAML files directly.
+    """
+    if not dir_path.is_dir():
+        raise CollectorError(f"Not a directory: {dir_path}")
+    return _collect_from_run_dir(dir_path, source_label=str(dir_path))
 
 
 def load_baseline(golden_path: Path) -> BaselineMetrics:
@@ -443,12 +541,12 @@ def compute_deltas(runs: list[RunData]) -> list[VersionDelta]:
 
 
 def collect_trend_data(
-    zip_paths: list[Path],
+    bundle_paths: list[Path],
     baseline_path: Path,
     repo: str,
     work_dir: Path | None = None,
 ) -> TrendData:
-    """Parse all zip bundles and assemble a TrendData."""
+    """Parse all bundles (zip files or directories) and assemble a TrendData."""
     import tempfile
 
     if work_dir is None:
@@ -457,13 +555,16 @@ def collect_trend_data(
     baseline = load_baseline(baseline_path)
 
     runs: list[RunData] = []
-    for zp in zip_paths:
-        logger.info("Collecting data from %s …", zp.name)
+    for bp in bundle_paths:
+        logger.info("Collecting data from %s …", bp.name)
         try:
-            run = collect_from_zip(zp, work_dir)
+            if bp.is_dir():
+                run = collect_from_directory(bp)
+            else:
+                run = collect_from_zip(bp, work_dir)
             runs.append(run)
         except CollectorError as exc:
-            logger.warning("Skipping %s: %s", zp.name, exc)
+            logger.warning("Skipping %s: %s", bp.name, exc)
 
     if not runs:
         raise CollectorError("No runs could be parsed from the provided bundles.")
