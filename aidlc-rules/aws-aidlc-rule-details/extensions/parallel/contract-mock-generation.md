@@ -50,6 +50,8 @@ For each interface contract:
 - [ ] Run Contract Tests against each Mock → all must pass
 - [ ] Document Mock server URLs and ports in contract-summary.md
 
+> **Startup order**: Mock servers are independent processes — each Mock only parses its own contract spec and listens on its own port. Start order does not matter, and the startup script may launch them in any order (including in parallel). If a consumer under test appears to depend on "Mock A calling Mock B", that indicates an anti-pattern: each unit's Mock should stand alone representing the provider's contract, not chain to another Mock. Resolve by flattening responses in the contract spec or using Prism's static example data.
+
 ## Step 5: Document Mock → Real Service Transition Plan
 - [ ] For each Mock, document:
   - Mock server URL: `http://localhost:{port}`
