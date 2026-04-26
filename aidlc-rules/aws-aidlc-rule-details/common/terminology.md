@@ -185,3 +185,25 @@ Files tracking workflow progress and status.
 - **UOW**: Unit of Work
 - **API**: Application Programming Interface
 - **CDK**: Cloud Development Kit (AWS)
+
+## Parallel Extension Terminology
+
+Used only when the `parallel` extension is enabled. See `extensions/parallel/` for full rule set.
+
+### Mock server
+A real HTTP or gRPC server that responds according to an Interface Contract specification, used by consumer units during parallel development before provider units deploy. Mock servers are real network servers listening on a port — NOT stub classes, fake objects, in-memory implementations, or language-specific mock frameworks. In narrative text, may be abbreviated as **Mock** (e.g., "start all Mocks with one command").
+
+### Interface Contract
+A machine-readable specification (OpenAPI 3.0, Protocol Buffers `.proto`, AsyncAPI, or JSON Schema) defining the boundary between two units. Established before any unit branch is created. Frozen during development — changes are deferred to Sync Point.
+
+### Contract Tests
+Auto-generated tests that verify a unit's actual implementation matches its Interface Contract. **Provider Tests** run against the real service; **Consumer Tests** run against the Mock server. Both use the same test cases (different target URLs).
+
+### PO (Product Owner)
+The role with final authority on merge order and contract decisions during parallel execution. PO is the only role that merges unit PRs to main.
+
+### Unit Lead
+The designated owner of a single unit branch. Responsible for implementation, contract tests passing, and PR quality within their unit.
+
+### Sync Point
+The integration checkpoint that occurs when a unit's PR is merged to main. Triggers the Mock-to-Real service transition for dependent units.

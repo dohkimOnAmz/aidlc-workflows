@@ -649,11 +649,20 @@ aws-aidlc-rule-details/
     │   └── baseline/
     │       ├── security-baseline.md          # Baseline security rules
     │       └── security-baseline.opt-in.md   # Opt-in prompt
-    └── testing/                       # Extension category
-        └── property-based/
-            ├── property-based-testing.md          # Property-based testing rules
-            └── property-based-testing.opt-in.md   # Opt-in prompt
+    ├── testing/                       # Extension category
+    │   └── property-based/
+    │       ├── property-based-testing.md          # Property-based testing rules
+    │       └── property-based-testing.opt-in.md   # Opt-in prompt
+    └── parallel/                      # Extension category (single-file grouping)
+        ├── parallel-execution.md             # Cross-cutting rules + stage orchestration hub
+        ├── parallel-execution.opt-in.md      # Opt-in prompt
+        ├── interface-contract.md             # Interface Contract Establishment stage
+        ├── contract-mock-generation.md       # Contract-Driven Mock Generation stage
+        ├── parallel-execution-strategy.md    # Branch, team assignment, and PO orchestration
+        └── sync-point.md                     # PR-based integration and Mock-to-Real transition
 ```
+
+The `parallel/` extension is different from the others: when opted in, it expands the workflow's stage orchestration (Interface Contract establishment, Mock server generation, branch-based isolation, PO-mediated Sync Points) in addition to adding rule constraints. See [`parallel-execution.md`](aidlc-rules/aws-aidlc-rule-details/extensions/parallel/parallel-execution.md) for the full rule set.
 
 > [!IMPORTANT]
 > The security extension rules are provided as a directional reference for building effective security rules within AI-DLC workflows. Each organization should build, customize, and thoroughly test their own security rules before deploying in production workflows.

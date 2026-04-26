@@ -11,8 +11,8 @@ Mock servers are NOT stub classes, fake objects, in-memory implementations, or l
 - Machine-readable contract specs must exist in aidlc-docs/construction/contracts/
 
 ## Step 1: Identify Mock Requirements
-- [ ] Load unit-team-assignment.md (check "Mock Required" column)
-- [ ] Load unit-of-work-dependency.md
+- [ ] Load `aidlc-docs/inception/application-design/unit-team-assignment.md` (check "Mock Required" column)
+- [ ] Load `aidlc-docs/inception/application-design/unit-of-work-dependency.md`
 - [ ] For each unit with dependencies:
   - List which interfaces need Mock servers
   - Assign a unique port per Mock server
