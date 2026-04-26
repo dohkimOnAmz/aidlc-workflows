@@ -352,6 +352,23 @@ Results are saved to `runs/<scenario>/extension-test/` with a comparison report 
 
 See [Extension Hook Testing Guide](./docs/extension-hook-testing.md) for detailed documentation.
 
+### Known limitations: parallel extension
+
+The `parallel` extension (see `aidlc-rules/aws-aidlc-rule-details/extensions/parallel/`) produces artifact types that current evaluator stages do not specifically verify:
+
+- `aidlc-docs/construction/contracts/*.yaml` / `*.json` — Interface Contracts (OpenAPI 3.0, Protocol Buffers, AsyncAPI, JSON Schema)
+- `aidlc-docs/construction/mocks/**` — Mock server configurations and startup scripts
+- `aidlc-docs/construction/contract-tests/**` — Provider/Consumer Contract Test suites
+- `aidlc-docs/inception/application-design/team-roster.md` and `unit-team-assignment.md` — Team composition and unit ownership
+- `aidlc-docs/construction/parallel-dashboard.md` — Unit-level progress dashboard
+
+Extension hook testing flags these files as present/absent (coarse-grained), but the Semantic and Code Evaluation stages do not currently parse Interface Contracts for schema validity, verify Mock server startability, or simulate Sync Point transitions. Running `ext-test` with parallel opt-in set to "YES" exercises the workflow's ability to produce these artifacts but does not validate their runtime correctness.
+
+Planned improvements (tracked separately):
+
+- **Phase 2** (artifact presence): add a check that verifies each expected parallel artifact exists when the extension is enabled in `aidlc-state.md`.
+- **Phase 3** (artifact validity): parse OpenAPI/JSON Schema for structural validity, verify Mock servers start via Prism, run generated Contract Tests against Mocks.
+
 ## Trend Reporting
 
 Generate cross-release trend reports that track evaluation metrics over time. Fetches evaluation bundles from GitHub releases and Actions artifacts, then renders HTML, Markdown, and YAML reports.
