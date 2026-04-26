@@ -61,11 +61,13 @@ Each unit executes in its own branch with context isolation:
    - Load all steps from `extensions/parallel/sync-point.md`
    - PR creation, Contract Test verification, PO review, Mock→Real transition
 
-### Single-Agent Fallback:
-If parallel sessions are not available:
-1. Complete ALL units' Functional Design first (sequential)
+### When Parallel Execution Is Not Feasible
+If parallel execution turns out to be infeasible after opt-in (e.g., insufficient team members to staff all units concurrently, or tooling constraints):
+1. Complete ALL units' Functional Design first (sequential, lightweight)
 2. Then complete ALL units' Code Generation (sequential)
 3. This provides cross-unit design awareness even in sequential mode
+
+> Note: For truly single-developer projects, prefer answering "B" to the parallel-execution opt-in prompt rather than enabling the extension and using this fallback. The fallback is intended for teams that opted in but later encountered practical constraints.
 
 ## Verification (at stage completion)
 When presenting any stage completion during Construction Phase:

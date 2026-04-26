@@ -70,18 +70,34 @@ Document in `aidlc-docs/construction/parallel-execution-rules.md`:
 - [ ] Dashboard updated: all active units → "In Progress"
 - [ ] PO monitors dashboard from central screen
 
+## Step 5.1: Foundation-Producing Unit Start Guidance
+
+If one of the units also OWNS the Interface Contracts (common in projects that have an explicit "integration" or "platform" unit — team members who wrote the contracts during Interface Contract Establishment):
+
+- That unit's developers may start implementation work in their unit branch immediately after contracts are committed to main
+- No need to wait for other units — the contracts on main are the handoff
+
+For units that CONSUME but do not produce contracts:
+
+- Start implementation against the Mock server immediately
+- Do NOT wait for the contract-producing unit's implementation to complete
+
+Rule: **Contracts on main = green light for all unit branches to start in parallel, regardless of who wrote the contracts.**
+
 ## Step 6: Present Completion and Await PO Approval
 - Show parallel execution plan summary
 - Show dashboard initial state
 - Confirm all branches created and contexts prepared
 - PO approves to begin Construction
 
-## Single-Agent Fallback
-If parallel sessions are not available:
+## When Parallel Execution Is Not Feasible
+If parallel execution turns out to be infeasible after opt-in (e.g., insufficient team members to staff all units concurrently, or tooling constraints):
 1. Complete ALL units' Functional Design first (sequential, lightweight)
 2. Then complete ALL units' Code Generation (sequential)
 3. This provides cross-unit design awareness even in sequential mode
 4. Dashboard still tracks progress in sequential mode
+
+See `parallel-execution.md` for additional guidance. Truly single-developer projects should answer "B" to the opt-in prompt rather than enable the extension and use this fallback.
 
 ## Critical Rules
 - PO is the ONLY person who merges PRs to main
