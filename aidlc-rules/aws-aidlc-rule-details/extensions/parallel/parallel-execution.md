@@ -17,6 +17,8 @@ Every PR to main MUST pass Contract Tests for all interfaces the unit implements
 ### Rule PARALLEL-04: PO Merge Authority
 Only PO may merge PRs to main. Merge order follows business priority. PO is the final authority on all integration decisions.
 
+If a Unit Lead disagrees with the PO's proposed merge order, the Unit Lead MAY record a `Merge Order Concern` entry on the dashboard with a brief rationale (e.g., technical dependency risk, contract defect suspicion). The PO MUST acknowledge the concern and either adjust the merge order or document the reasoning for proceeding with the original order in `audit.md`. The PO's decision is final — this process provides traceability, not veto power.
+
 ### Rule PARALLEL-05: Mock Transition Verification
 When a dependency unit merges to main, dependent units MUST:
 1. Pull main into their branch

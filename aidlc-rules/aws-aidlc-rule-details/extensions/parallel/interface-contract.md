@@ -28,7 +28,7 @@ No programming language code (Swift, Python, Java, TypeScript, etc.) is allowed 
   - REST API → OpenAPI 3.0 spec
   - gRPC → .proto file
   - Event/Message → AsyncAPI spec + JSON Schema for payloads
-- [ ] If a dependency has no clear network protocol, ask the user to choose one
+- [ ] If a dependency has no clear network protocol, ask the **PO** to decide. If the PO defers to technical judgment, consult the **Unit Leads** of the provider and consumer units; the PO retains final authority.
 - [ ] Create interface inventory list with protocol type for each
 
 ### Step 2: Generate Context-Appropriate Questions
